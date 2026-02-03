@@ -1,0 +1,34 @@
+{
+  "name": "restry/custom-channel",
+  "version": "2026.2.1",
+  "description": "OpenClaw Custom Channel plugin with WebSocket and Webhook support",
+  "type": "module",
+  "dependencies": {
+    "ws": "^8.18.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "custom-channel",
+      "label": "Custom Channel",
+      "selectionLabel": "Custom Channel (WebSocket/Webhook)",
+      "docsPath": "/channels/custom-channel",
+      "docsLabel": "custom-channel",
+      "blurb": "Generic channel for web chat tools and mini-programs via WebSocket or Webhook.",
+      "order": 90,
+      "quickstartAllowFrom": true
+    },
+    "install": {
+      "npmSpec": "restry/custom-channel",
+      "localPath": "extensions/custom-channel",
+      "defaultChoice": "local"
+    }
+  }
+}
