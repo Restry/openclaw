@@ -1,5 +1,4 @@
-import type { WebSocket } from "ws";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import type { CustomChannelWebsocketConfig } from "./config-schema.js";
 
 export type WebSocketClient = {
@@ -135,7 +134,7 @@ export function startWebSocketServer(config: CustomChannelWebsocketConfig): WebS
         clients.delete(id);
         continue;
       }
-      if (client.ws.readyState === 1) {
+      if (client.ws.readyState === WebSocket.OPEN) {
         sendMessage(client, { type: "ping" });
         client.lastPingAt = now;
       }
@@ -204,7 +203,7 @@ function handleAuth(
 
 export function sendMessage(client: WebSocketClient, message: OutgoingWebSocketMessage): boolean {
   try {
-    if (client.ws.readyState === 1) {
+    if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(JSON.stringify(message));
       return true;
     }
