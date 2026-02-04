@@ -65,6 +65,19 @@ const QWEN_PORTAL_DEFAULT_COST = {
   cacheWrite: 0,
 };
 
+// Azure OpenAI uses the same OpenAI-compatible API format.
+// Users must set AZURE_OPENAI_ENDPOINT (e.g., https://<resource-name>.openai.azure.com)
+// and AZURE_OPENAI_API_KEY for authentication.
+const AZURE_OPENAI_DEFAULT_CONTEXT_WINDOW = 128000;
+const AZURE_OPENAI_DEFAULT_MAX_TOKENS = 4096;
+// Pricing varies by region and model deployment. Override in models.json for accurate costs.
+const AZURE_OPENAI_DEFAULT_COST = {
+  input: 0,
+  output: 0,
+  cacheRead: 0,
+  cacheWrite: 0,
+};
+
 const OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1";
 const OLLAMA_API_BASE_URL = "http://127.0.0.1:11434";
 const OLLAMA_DEFAULT_CONTEXT_WINDOW = 128000;
@@ -350,6 +363,54 @@ function buildQwenPortalProvider(): ProviderConfig {
   };
 }
 
+function buildAzureOpenAIProvider(baseUrl: string): ProviderConfig {
+  // Azure OpenAI uses the same API format as OpenAI.
+  // The baseUrl should be the Azure OpenAI endpoint (e.g., https://<resource>.openai.azure.com)
+  // Model deployments are configured in the Azure portal and referenced by deployment name.
+  return {
+    baseUrl,
+    api: "openai-completions",
+    models: [
+      {
+        id: "gpt-4o",
+        name: "GPT-4o (Azure)",
+        reasoning: false,
+        input: ["text", "image"],
+        cost: AZURE_OPENAI_DEFAULT_COST,
+        contextWindow: AZURE_OPENAI_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: AZURE_OPENAI_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "gpt-4o-mini",
+        name: "GPT-4o Mini (Azure)",
+        reasoning: false,
+        input: ["text", "image"],
+        cost: AZURE_OPENAI_DEFAULT_COST,
+        contextWindow: AZURE_OPENAI_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: AZURE_OPENAI_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "gpt-4",
+        name: "GPT-4 (Azure)",
+        reasoning: false,
+        input: ["text"],
+        cost: AZURE_OPENAI_DEFAULT_COST,
+        contextWindow: AZURE_OPENAI_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: AZURE_OPENAI_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "gpt-35-turbo",
+        name: "GPT-3.5 Turbo (Azure)",
+        reasoning: false,
+        input: ["text"],
+        cost: AZURE_OPENAI_DEFAULT_COST,
+        contextWindow: 16384,
+        maxTokens: 4096,
+      },
+    ],
+  };
+}
+
 function buildSyntheticProvider(): ProviderConfig {
   return {
     baseUrl: SYNTHETIC_BASE_URL,
@@ -422,6 +483,18 @@ export async function resolveImplicitProviders(params: {
     resolveApiKeyFromProfiles({ provider: "moonshot", store: authStore });
   if (moonshotKey) {
     providers.moonshot = { ...buildMoonshotProvider(), apiKey: moonshotKey };
+  }
+
+  // Azure OpenAI provider - requires both API key and endpoint
+  const azureOpenAIKey =
+    resolveEnvApiKeyVarName("azure-openai") ??
+    resolveApiKeyFromProfiles({ provider: "azure-openai", store: authStore });
+  const azureOpenAIEndpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim();
+  if (azureOpenAIKey && azureOpenAIEndpoint) {
+    providers["azure-openai"] = {
+      ...buildAzureOpenAIProvider(azureOpenAIEndpoint),
+      apiKey: azureOpenAIKey,
+    };
   }
 
   const syntheticKey =
